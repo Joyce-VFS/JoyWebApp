@@ -17,13 +17,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Set SendGrid API Key
+console.log("SendGrid API Key:", process.env.SENDGRID_API_KEY ? "Exists" : "Missing"); //using for debug
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Serve static files from root and assets folders
 app.use(express.static(path.join(__dirname, '/')));   // Serve from root
 app.use(express.static(path.join(__dirname, 'assets')));  // Serve from assets folder
 app.use(express.static(path.join(__dirname, 'images')));  // Serve from images folder
-app.use(express.static(path.join(__dirname, 'public')));  // Serve from public folder
+app.use(express.static(path.join(__dirname, 'public')));  // Serve from public folder (for the thank-you page)
 
 // Serve index.html on root route
 app.get('/', (req, res) => {
@@ -56,7 +58,7 @@ app.post('/send', async (req, res) => {
         };
 
         await sgMail.send(autoReply);
-        res.redirect('/thank-you.html');
+        res.redirect('/public/thank-you.html');
     } catch (error) {
         console.error('Error sending email:', error);
         res.status(500).json({ error: 'Failed to send email' });
