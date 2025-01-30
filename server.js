@@ -2,26 +2,34 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const sgMail = require('@sendgrid/mail');
+const path = require('path');
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-//app.use(cors());
+
+// CORS configuration
 const corsOptions = {
-    origin: "http://127.0.0.1:5500", // Allow frontend to communicate with backend
+    origin: "*", // Allow all origins (before was locally only)
     methods: "POST",
     allowedHeaders: ["Content-Type"]
 };
 app.use(cors(corsOptions));
 
 // Set SendGrid API Key
-//console.log("SendGrid API Key:", process.env.SENDGRID_API_KEY);
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Serve static files from the current directory
-const path = require('path');
-app.use(express.static('public'));
+// Serve static files from root and assets folders
+app.use(express.static(path.join(__dirname, '/')));   // Serve from root
+app.use(express.static(path.join(__dirname, 'assets')));  // Serve from assets folder
+app.use(express.static(path.join(__dirname, 'images')));  // Serve from images folder
 
+// Serve index.html on root route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// POST route for sending emails
 app.post('/send', async (req, res) => {
     const { name, email, message } = req.body;
 
@@ -30,30 +38,30 @@ app.post('/send', async (req, res) => {
     }
 
     const msg = {
-        to: process.env.EMAIL_TO, // Your email
-        from: process.env.EMAIL_FROM, // Must match your SendGrid verified sender
+        to: process.env.EMAIL_TO,
+        from: process.env.EMAIL_FROM,
         subject: `New Contact Form Submission from ${name}`,
         text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
     };
 
     try {
-        //await sgMail.send(msg);
-        await sgMail.send(msg); // Sends email to you
+        await sgMail.send(msg);
 
         const autoReply = {
-        to: email, // Sends response to the user
-        from: process.env.EMAIL_FROM, // Your email
-        subject: "Thank you for reaching out!",
-        text: `Hi ${name},\n\nThank you for contacting Joyce! She has received your message and will respond as soon as possible.\n\nBest regards,\nJoyce V.F.S.`,
-};
+            to: email,
+            from: process.env.EMAIL_FROM,
+            subject: "Thank you for reaching out!",
+            text: `Hi ${name},\n\nThank you for contacting Joyce! She has received your message and will respond as soon as possible.\n\nBest regards,\nJoyce V.F.S.`,
+        };
 
-await sgMail.send(autoReply);
-res.redirect('/thank-you.html');
+        await sgMail.send(autoReply);
+        res.redirect('/thank-you.html');
     } catch (error) {
         console.error('Error sending email:', error);
         res.status(500).json({ error: 'Failed to send email' });
     }
 });
 
+// Set port and start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
