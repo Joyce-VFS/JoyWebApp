@@ -23,6 +23,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 app.use(express.static(path.join(__dirname, '/')));   // Serve from root
 app.use(express.static(path.join(__dirname, 'assets')));  // Serve from assets folder
 app.use(express.static(path.join(__dirname, 'images')));  // Serve from images folder
+app.use(express.static(path.join(__dirname, 'public')));  // Serve from public folder
 
 // Serve index.html on root route
 app.get('/', (req, res) => {
